@@ -67,7 +67,7 @@ def register():
         raise HttpError(409, '用户名已存在')
 
     # 插入数据库与加密
-    cursor.execute('insert into `users`(`username`, `password`, `sex`, `age`, `address`,) values (%s, %s, %s, %s, %s)',
+    cursor.execute('insert into `users`(`username`, `password`, `sex`, `age`, `address`) values (%s, %s, %s, %s, %s)',
                    (username, generate_password_hash(password), sex, age, address))
     conn.commit()
 
@@ -111,19 +111,20 @@ def login():
 # 个人信息界面
 @app.route('/me', methods=['GET'])
 def get_information():
+    username = session.get('username')
     # 获取数据库连接
     conn, cursor = get_connection()
     # 如果session中没有user_id，说明用户未登录，返回401错误
     if session.get('user_id') is None:
         raise HttpError(401, '请先登录')
     # 数据库操作
-    cursor.execute('select count() from `users` where `username`=%s', (session.get('user_id')))
-    data = cursor.fetchone()
+    cursor.execute('SELECT `username`, `sex`, `age`, `address` from `users` where `username`=%s', (username, ))
+    data = cursor.fetchall()
     # 关闭数据库连接
     cursor.close()
     conn.close()
-
-    return data
+    response = jsonify(data)
+    return response
 
 
 # 修改用户名
@@ -186,6 +187,7 @@ def change_password():
 
 @app.route('/information', methods=['PUT'])
 def change_information():
+    username = session.get('username')
     data = request.get_json(force=True)
     sex = data.get('sex')
     age = data.get('age')
@@ -199,8 +201,8 @@ def change_information():
         raise HttpError(401, '请先登录')
 
     # 数据库操作
-    cursor.execute('update `users` set `sex`, `age`, `address`,=%s where id=%s', (sex, age, address,
-                   session.get('user_id')))
+    cursor.execute('update `users` set `sex`=%s, `age`=%s, `address`=%s where `username`=%s', (sex, age, address,
+                   username))
 
     conn.commit()
 
