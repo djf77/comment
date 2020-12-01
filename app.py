@@ -62,9 +62,18 @@ def register():
     # 判断用户名是否存在
     cursor.execute('select count(*) from `users` where `username`=%s', (username,))
     count = cursor.fetchone()
-    # 如果用户名已存在则返回409错误
     if count[0] >= 1:
-        raise HttpError(409, '用户名已存在')
+        raise HttpError(400, '用户名已存在')
+    if username is None:
+        raise HttpError(400, '缺少参数 username')
+    if password is None:
+        raise HttpError(400, '缺少参数 password')
+    if sex is None:
+        raise HttpError(400, '缺少参数 sex')
+    if age is None:
+        raise HttpError(400, '缺少参数 age')
+    if address is None:
+        raise HttpError(400, '缺少参数 address')
 
     # 插入数据库与加密
     cursor.execute('insert into `users`(`username`, `password`, `sex`, `age`, `address`) values (%s, %s, %s, %s, %s)',
