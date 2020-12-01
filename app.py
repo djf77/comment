@@ -208,6 +208,12 @@ def change_information():
     # 如果session中没有user_id，说明用户未登录，返回401错误
     if session.get('user_id') is None:
         raise HttpError(401, '请先登录')
+    if sex is None:
+        raise HttpError(400, '缺少参数 sex')
+    if age is None:
+        raise HttpError(400, '缺少参数 age')
+    if address is None:
+        raise HttpError(400, '缺少参数 address')
 
     # 数据库操作
     cursor.execute('update `users` set `sex`=%s, `age`=%s, `address`=%s where `username`=%s', (sex, age, address,
