@@ -13,6 +13,7 @@ config = {
 
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = '123456'
 
 
 # 自定义错误
