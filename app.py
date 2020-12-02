@@ -84,7 +84,7 @@ def register():
     cursor.close()
     conn.close()
 
-    return '创建成功'
+    return '注册成功'
 
 
 # 登录接口
@@ -193,6 +193,7 @@ def change_password():
     return '修改密码成功'
 
 
+# 修改个人信息
 @app.route('/information', methods=['PUT'])
 def change_information():
     username = session.get('username')
@@ -225,6 +226,75 @@ def change_information():
     conn.close()
 
     return '修改个人信息成功'
+
+
+# 留言界面
+@app.route('/', methods=['GET'])
+def show_comment():
+    # 获取数据库连接
+    conn, cursor = get_connection()
+    # 数据库操作
+    cursor.execute('select * from comments')
+    data = cursor.fetchall()
+    # 关闭数据库连接
+    cursor.close()
+    conn.close()
+    response = jsonify(data)
+    return response
+
+
+# 上传留言
+@app.route('/add_comment', methods=['POST'])
+def add_comment():
+    # 如果session中没有user_id，说明用户未登录，返回401错误
+    if session.get('user_id') is None:
+        raise HttpError(401, '请先登录')
+
+    data = request.get_json(force=True)
+    comments_author = session.get('username')
+    comment = data.get('comment')
+
+    # 获取数据库连接
+    conn, cursor = get_connection()
+    if comment is None:
+        raise HttpError(400, '缺少参数 comment')
+    # 插入数据库
+    cursor.execute('insert into `comments`(`comments_author`, `comment`) values (%s, %s)',
+                   (comments_author, comment))
+    conn.commit()
+
+    # 关闭数据库连接
+    cursor.close()
+    conn.close()
+
+    return '上传成功'
+
+
+# 修改留言
+@app.route('/change_comment', methods=['PUT'])
+def change_comment():
+    # 如果session中没有user_id，说明用户未登录，返回401错误
+    if session.get('user_id') is None:
+        raise HttpError(401, '请先登录')
+
+    data = request.get_json(force=True)
+    comment = data.get('comment')
+
+    # 获取数据库连接
+    conn, cursor = get_connection()
+    if comment is None:
+        raise HttpError(400, '缺少参数 comment')
+
+    # 数据库操作
+    cursor.execute('', (comment, ))
+
+    conn.commit()
+
+    # 关闭数据库连接
+    cursor.close()
+    conn.close()
+
+    return '修改留言成功'
 
 
 if __name__ == '__main__':
