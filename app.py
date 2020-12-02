@@ -63,7 +63,7 @@ def register():
     cursor.execute('select count(*) from `users` where `username`=%s', (username,))
     count = cursor.fetchone()
     if count[0] >= 1:
-        raise HttpError(400, '用户名已存在')
+        raise HttpError(400, 'username参数已存在')
     if username is None:
         raise HttpError(400, '缺少参数 username')
     if password is None:
@@ -152,9 +152,8 @@ def change_username():
     # 判断用户名是否存在
     cursor.execute('select count(*) from `users` where id=%s', (username,))
     count = cursor.fetchone()[0]
-    # 如果用户名已存在则返回409错误
     if count >= 1:
-        raise HttpError(409, '用户名已存在')
+        raise HttpError(400, 'username参数已存在')
 
     # 根据登录时储存的user_id在where子句中定位到具体的用户并更新他的用户名
     cursor.execute('update `users` set `username`=%s where id=%s', (username, session.get('user_id')))
