@@ -234,7 +234,7 @@ def show_comment():
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('select * from comments')
+    cursor.execute('select `comments_author`, `comment`, `create_time`, `update_time` from comments')
     data = cursor.fetchall()
     # 关闭数据库连接
     cursor.close()
