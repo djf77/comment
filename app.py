@@ -270,31 +270,24 @@ def add_comment():
     return '上传成功'
 
 
-# 修改留言
-@app.route('/change_comment', methods=['PUT'])
-def change_comment():
+# 删除留言
+@app.route('/delete_comment', methods=['DELETE'])
+def delete_comment():
     # 如果session中没有user_id，说明用户未登录，返回401错误
     if session.get('user_id') is None:
         raise HttpError(401, '请先登录')
-
-    data = request.get_json(force=True)
-    comment = data.get('comment')
-
+    comments_author = session.get('username')
     # 获取数据库连接
     conn, cursor = get_connection()
-    if comment is None:
-        raise HttpError(400, '缺少参数 comment')
-
     # 数据库操作
-    cursor.execute('', (comment, ))
-
+    cursor.execute('delete from `comments` where `comments_author`=%s', (comments_author,))
     conn.commit()
 
     # 关闭数据库连接
     cursor.close()
     conn.close()
 
-    return '修改留言成功'
+    return '删除成功'
 
 
 if __name__ == '__main__':
