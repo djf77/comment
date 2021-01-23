@@ -114,6 +114,10 @@ def login():
     session['username'] = username
     session['user_id'] = user_id
 
+    # 关闭数据库连接
+    cursor.close()
+    conn.close()
+    
     return '登录成功'
 
 
@@ -262,12 +266,37 @@ def add_comment():
     cursor.execute('insert into `comments`(`comments_author`, `comment`) values (%s, %s)',
                    (comments_author, comment))
     conn.commit()
-
+    cursor.execute('select `update_time` from `comments` where `comment` = %s', (comment,))
+    time = cursor.fetchone()
+    session['time'] = time
     # 关闭数据库连接
     cursor.close()
     conn.close()
 
     return '上传成功'
+
+
+# 修改留言
+@app.route('/update_comment', methods=["PUT"])
+def update_comment():
+    # 如果session中没有user_id，说明用户未登录，返回401错误
+    if session.get('user_id') is None:
+        raise HttpError(401, '请先登录')
+
+    data = request.get_json(force=True)
+    comments_author = session.get('username')
+    comment = data.get('comment')
+    time = session.get('time')
+
+    # 获取数据库连接
+    conn, cursor = get_connection()
+    # 数据库操作
+    cursor.execute('update `comments` set `comment`=%s where `comments_author`=%s and `update_time`=%s',
+                   (comment, comments_author, time))
+    # 关闭数据库连接
+    cursor.close()
+    conn.close()
+    return '修改成功'
 
 
 # 删除留言
