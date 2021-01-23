@@ -271,6 +271,22 @@ POST /add_comment
 1. 缺少参数 comment
 ```
 
+## 修改留言
+```
+PUT /update_comment
+```
+
+**未登录时：401**
+
+**响应参数**
+
+```
+{
+	"status": 200
+	"msg": "修改成功"
+}
+```
+
 ## 删除留言
 
 ```
@@ -287,3 +303,4 @@ DELETE /delete_comment
 	"msg": "删除成功"
 }
 ```
+
