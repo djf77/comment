@@ -2,18 +2,22 @@
 from flask import Flask, request, session, jsonify
 from mysql.connector import connect
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from flask_cors import CORS
+from gevent import pywsgi
 
 config = {
     'user': 'root',
-    'password': '',
-    'host': 'localhost',
-    'database': 'board'
+    'password': '123456',
+    'host': '127.0.0.1',
+    'database': 'board',
+    'auth_plugin': 'mysql_native_password'
 }
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '123456'
+
+CORS(app)
 
 
 # 自定义错误
@@ -40,7 +44,7 @@ def handle_http_error(error):
 
 def get_connection():
     conn = connect(user=config.get('user'), password=config.get('password'),
-                   database=config.get('database'))
+                   database=config.get('database'),auth_plugin=config.get('auth_plugin'))
     cursor = conn.cursor()
 
     return conn, cursor
@@ -98,7 +102,7 @@ def login():
     conn, cursor = get_connection()
 
     # 获取传入的用户的密码和id
-    cursor.execute('select `id`, `password` from `users` where `username`=%s', (username, ))
+    cursor.execute('select `id`, `password` from `users` where `username`=%s', (username,))
     values = cursor.fetchone()
 
     # 如果数据库中没有这个用户，则fetchone函数会返回None
@@ -131,7 +135,7 @@ def get_information():
     if session.get('user_id') is None:
         raise HttpError(401, '请先登录')
     # 数据库操作
-    cursor.execute('SELECT `username`, `sex`, `age`, `address` from `users` where `username`=%s', (username, ))
+    cursor.execute('SELECT `username`, `sex`, `age`, `address` from `users` where `username`=%s', (username,))
     data = cursor.fetchall()
     # 关闭数据库连接
     cursor.close()
@@ -221,7 +225,7 @@ def change_information():
 
     # 数据库操作
     cursor.execute('update `users` set `sex`=%s, `age`=%s, `address`=%s where `username`=%s', (sex, age, address,
-                   username))
+                                                                                               username))
 
     conn.commit()
 
@@ -266,7 +270,7 @@ def add_comment():
     cursor.execute('insert into `comments`(`comments_author`, `comment`) values (%s, %s)',
                    (comments_author, comment))
     conn.commit()
-    
+
     # 关闭数据库连接
     cursor.close()
     conn.close()
@@ -319,4 +323,6 @@ def delete_comment():
 
 
 if __name__ == '__main__':
-    app.run()
+    server = pywsgi.WSGIServer(('0.0.0.0', 8000), app)
+    server.serve_forever()
+
