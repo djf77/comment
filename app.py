@@ -167,6 +167,7 @@ def change_username():
     cursor.execute('update `users` set `username`=%s where id=%s', (username, session.get('user_id')))
 
     conn.commit()
+    session['username'] = username
 
     # 关闭数据库连接
     cursor.close()
@@ -298,6 +299,7 @@ def update_comment():
     cursor.execute('update `comments` set `comment`=%s where `comments_author`=%s and `comment`=%s',
                    (comment, comments_author, last_comment))
     conn.commit()
+    session['comment'] = comment
     # 关闭数据库连接
     cursor.close()
     conn.close()
@@ -314,7 +316,7 @@ def delete_comment():
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('delete from `comments` where `comments`=%s', (comment,))
+    cursor.execute('delete from `comments` where `comment`=%s', (comment,))
     conn.commit()
 
     # 关闭数据库连接
@@ -327,5 +329,4 @@ def delete_comment():
 if __name__ == '__main__':
     server = pywsgi.WSGIServer(('0.0.0.0', 5000), app)
     server.serve_forever()
-
 
