@@ -271,8 +271,10 @@ def add_comment():
     cursor.execute('insert into `comments`(`comments_author`, `comment`) values (%s, %s)',
                    (comments_author, comment))
     conn.commit()
-
-    session['comment'] = comment
+    cursor.execute('select `comment_id` from `comments` where `comment`=%s', (comment,))
+    values = cursor.fetchone()
+    comment_id = values[0]
+    session['comment_id'] = comment_id
 
     # 关闭数据库连接
     cursor.close()
@@ -289,36 +291,33 @@ def update_comment():
         raise HttpError(401, '请先登录')
 
     data = request.get_json(force=True)
-    comments_author = session.get('username')
-    last_comment = session.get('comment')
+    comment_id = session.get('comment_id')
     comment = data.get('comment')
 
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('update `comments` set `comment`=%s where `comments_author`=%s and `comment`=%s',
-                   (comment, comments_author, last_comment))
+    cursor.execute('update `comments` set `comment`=%s where `comment_id`=%s',
+                   (comment, comment_id))
     conn.commit()
-    session['comment'] = comment
     # 关闭数据库连接
     cursor.close()
     conn.close()
     return '修改成功'
 
 
-# 删除留言
+# 删除留言（一键删除）
 @app.route('/delete_comment', methods=['DELETE'])
 def delete_comment():
     # 如果session中没有user_id，说明用户未登录，返回401错误
     if session.get('user_id') is None:
         raise HttpError(401, '请先登录')
-    comment = session.get('comment')
+    comments_author = session.get('username')
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('delete from `comments` where `comment`=%s', (comment,))
+    cursor.execute('DELETE FROM `comments` where comments_author=%s', (comments_author, ))
     conn.commit()
-
     # 关闭数据库连接
     cursor.close()
     conn.close()
