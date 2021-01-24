@@ -296,6 +296,7 @@ def update_comment():
     comment_id = cursor.fetchone()
     cursor.execute('update `comments` set `comment`=%s where `comments_author`=%s and `update_time`=%s',
                    (comment, comments_author, comment_id))
+    conn.commit()
     # 关闭数据库连接
     cursor.close()
     conn.close()
@@ -323,6 +324,6 @@ def delete_comment():
 
 
 if __name__ == '__main__':
-    server = pywsgi.WSGIServer(('0.0.0.0', 8000), app)
+    server = pywsgi.WSGIServer(('0.0.0.0', 5000), app)
     server.serve_forever()
 
