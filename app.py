@@ -44,7 +44,7 @@ def handle_http_error(error):
 
 def get_connection():
     conn = connect(user=config.get('user'), password=config.get('password'),
-                   database=config.get('database'),auth_plugin=config.get('auth_plugin'))
+                   database=config.get('database'), auth_plugin=config.get('auth_plugin'))
     cursor = conn.cursor()
 
     return conn, cursor
@@ -271,6 +271,8 @@ def add_comment():
                    (comments_author, comment))
     conn.commit()
 
+    session['comment'] = comment
+
     # 关闭数据库连接
     cursor.close()
     conn.close()
@@ -287,15 +289,14 @@ def update_comment():
 
     data = request.get_json(force=True)
     comments_author = session.get('username')
+    last_comment = session.get('comment')
     comment = data.get('comment')
 
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('select `comment_id` from `comments` where `comment` = %s', (comment,))
-    comment_id = cursor.fetchone()
-    cursor.execute('update `comments` set `comment`=%s where `comments_author`=%s and `update_time`=%s',
-                   (comment, comments_author, comment_id))
+    cursor.execute('update `comments` set `comment`=%s where `comments_author`=%s and `comment`=%s',
+                   (comment, comments_author, last_comment))
     conn.commit()
     # 关闭数据库连接
     cursor.close()
@@ -309,11 +310,11 @@ def delete_comment():
     # 如果session中没有user_id，说明用户未登录，返回401错误
     if session.get('user_id') is None:
         raise HttpError(401, '请先登录')
-    comments_author = session.get('username')
+    comment = session.get('comment')
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('delete from `comments` where `comments_author`=%s', (comments_author,))
+    cursor.execute('delete from `comments` where `comments`=%s', (comment,))
     conn.commit()
 
     # 关闭数据库连接
@@ -326,4 +327,5 @@ def delete_comment():
 if __name__ == '__main__':
     server = pywsgi.WSGIServer(('0.0.0.0', 5000), app)
     server.serve_forever()
+
 
