@@ -3,11 +3,12 @@ from flask import Flask, request, session, jsonify
 from mysql.connector import connect
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
+from gevent import pywsgi
 
 config = {
     'user': 'root',
-    'password': '',
-    'host': 'localhost',
+    'password': '123456',
+    'host': '127.0.0.1',
     'database': 'board',
     'auth_plugin': 'mysql_native_password'
 }
@@ -332,4 +333,5 @@ def delete_comment():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    server = pywsgi.WSGIServer(('0.0.0.0', 5000), app)
+    server.serve_forever()
