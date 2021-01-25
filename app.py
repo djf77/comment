@@ -3,12 +3,11 @@ from flask import Flask, request, session, jsonify
 from mysql.connector import connect
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
-from gevent import pywsgi
 
 config = {
     'user': 'root',
-    'password': '123456',
-    'host': '127.0.0.1',
+    'password': '',
+    'host': 'localhost',
     'database': 'board',
     'auth_plugin': 'mysql_native_password'
 }
@@ -243,7 +242,7 @@ def show_comment():
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('select `comments_author`, `comment`, `create_time`, `update_time` from comments')
+    cursor.execute('select `comment_id`, `comments_author`, `comment`, `create_time`, `update_time` from comments')
     data = cursor.fetchall()
     # 关闭数据库连接
     cursor.close()
@@ -271,10 +270,6 @@ def add_comment():
     cursor.execute('insert into `comments`(`comments_author`, `comment`) values (%s, %s)',
                    (comments_author, comment))
     conn.commit()
-    cursor.execute('select `comment_id` from `comments` where `comment`=%s', (comment,))
-    values = cursor.fetchone()
-    comment_id = values[0]
-    session['comment_id'] = comment_id
 
     # 关闭数据库连接
     cursor.close()
@@ -291,14 +286,18 @@ def update_comment():
         raise HttpError(401, '请先登录')
 
     data = request.get_json(force=True)
-    comment_id = session.get('comment_id')
+    comment_id = data.get('id')
     comment = data.get('comment')
+
+    if comment is None:
+        raise HttpError(400, '缺少参数 comment')
+    if comment_id is None:
+        raise HttpError(400, '缺少参数 id')
 
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('update `comments` set `comment`=%s where `comment_id`=%s',
-                   (comment, comment_id))
+    cursor.execute('update `comments` set `comment`=%s where `comment_id`=%s', (comment, comment_id))
     conn.commit()
     # 关闭数据库连接
     cursor.close()
@@ -306,17 +305,20 @@ def update_comment():
     return '修改成功'
 
 
-# 删除留言（一键删除）
+# 删除留言
 @app.route('/delete_comment', methods=['DELETE'])
 def delete_comment():
     # 如果session中没有user_id，说明用户未登录，返回401错误
     if session.get('user_id') is None:
         raise HttpError(401, '请先登录')
-    comments_author = session.get('username')
+    data = request.get_json(force=True)
+    comment_id = data.get('id')
+    if comment_id is None:
+        raise HttpError(400, '缺少参数 id')
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('DELETE FROM `comments` where comments_author=%s', (comments_author, ))
+    cursor.execute('DELETE FROM `comments` where comment_id=%s', (comment_id, ))
     conn.commit()
     # 关闭数据库连接
     cursor.close()
@@ -326,6 +328,4 @@ def delete_comment():
 
 
 if __name__ == '__main__':
-    server = pywsgi.WSGIServer(('0.0.0.0', 5000), app)
-    server.serve_forever()
-
+    app.run(debug=True)
