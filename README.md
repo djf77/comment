@@ -99,39 +99,7 @@ GET/me
 ]
 ```
 
-## 修改用户名
 
-```
-PUT/username
-```
-
-请求参数
-
-```
-{
-	"username": "用户名"
-}
-```
-
-响应参数
-
-**成功时：**
-
-```
-{
-	"status": 200
-	"msg": "修改用户名成功"
-}
-```
-
-**失败时：**
-
-`HTTP/1.1 400 Bad Request`
-
-```
-1. 缺少参数 username
-2. username参数已存在
-```
 
 ## 修改密码
 
@@ -166,16 +134,17 @@ PUT/password
 缺少参数 password
 ```
 
-## 修改个人信息
+## 修改信息
 
 ```
-PUT/information
+PUT/username
 ```
 
 请求参数
 
 ```
 {
+	"username": "用户名",
 	"sex": "性别",
 	"age": "阿拉伯数字",
 	"address": "居住地"
@@ -189,7 +158,7 @@ PUT/information
 ```
 {
 	"status": 200
-	"msg": "修改个人信息成功"
+	"msg": "修改信息成功"
 }
 ```
 
@@ -198,11 +167,12 @@ PUT/information
 `HTTP/1.1 400 Bad Request`
 
 ```
-1. 缺少参数 sex
-2. 缺少参数 age
-3. 缺少参数 address
+1. 缺少参数 username
+2. 缺少参数 sex
+3. 缺少参数 age
+4. 缺少参数 address
+5. username参数已存在
 ```
-
  
 
 ## 留言部分：
