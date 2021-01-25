@@ -288,6 +288,7 @@ def update_comment():
     data = request.get_json(force=True)
     comment_id = data.get('id')
     comment = data.get('comment')
+    comments_author = session['username']
 
     if comment is None:
         raise HttpError(400, '缺少参数 comment')
@@ -297,7 +298,8 @@ def update_comment():
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('update `comments` set `comment`=%s where `comment_id`=%s', (comment, comment_id))
+    cursor.execute('update `comments` set `comment`=%s where `comment_id`=%s and `comments_author`=%s',
+                   (comment, comment_id, comments_author))
     conn.commit()
     # 关闭数据库连接
     cursor.close()
@@ -313,12 +315,14 @@ def delete_comment():
         raise HttpError(401, '请先登录')
     data = request.get_json(force=True)
     comment_id = data.get('id')
+    comments_author = session['username']
     if comment_id is None:
         raise HttpError(400, '缺少参数 id')
     # 获取数据库连接
     conn, cursor = get_connection()
     # 数据库操作
-    cursor.execute('DELETE FROM `comments` where comment_id=%s', (comment_id, ))
+    cursor.execute('DELETE FROM `comments` where `comment_id`=%s and `comments_author`=%s',
+                   (comment_id, comments_author))
     conn.commit()
     # 关闭数据库连接
     cursor.close()
