@@ -144,6 +144,38 @@ def get_information():
     return response
 
 
+# 修改用户名
+@app.route('/username', methods=['PUT'])
+def change_username():
+    data = request.get_json(force=True)
+    username = data.get('username')
+
+    # 获取数据库连接
+    conn, cursor = get_connection()
+
+    # 如果session中没有user_id，说明用户未登录，返回401错误
+    if session.get('user_id') is None:
+        raise HttpError(401, '请先登录')
+
+    # 判断用户名是否存在
+    cursor.execute('select count(*) from `users` where id=%s', (session.get('user_id'), ))
+    count = cursor.fetchone()[0]
+    if count >= 1:
+        raise HttpError(400, 'username参数已存在')
+
+    # 根据登录时储存的user_id在where子句中定位到具体的用户并更新他的用户名
+    cursor.execute('update `users` set `username`=%s where id=%s', (username, session.get('user_id')))
+
+    conn.commit()
+    session['username'] = username
+
+    # 关闭数据库连接
+    cursor.close()
+    conn.close()
+
+    return '修改用户名成功'
+
+
 # 修改密码
 @app.route('/password', methods=['PUT'])
 def change_password():
@@ -170,46 +202,39 @@ def change_password():
     return '修改密码成功'
 
 
-# 修改用户名
-@app.route('/username', methods=['PUT'])
-def change_username():
-    # 如果session中没有user_id，说明用户未登录，返回401错误
-    if session.get('user_id') is None:
-        raise HttpError(401, '请先登录')
+# 修改个人信息
+@app.route('/information', methods=['PUT'])
+def change_information():
+    username = session.get('username')
     data = request.get_json(force=True)
-    username = data.get('username')
     sex = data.get('sex')
     age = data.get('age')
     address = data.get('address')
-    if username is None:
-        raise HttpError(400, '缺少参数 username')
+
+    # 获取数据库连接
+    conn, cursor = get_connection()
+
+    # 如果session中没有user_id，说明用户未登录，返回401错误
+    if session.get('user_id') is None:
+        raise HttpError(401, '请先登录')
     if sex is None:
         raise HttpError(400, '缺少参数 sex')
     if age is None:
         raise HttpError(400, '缺少参数 age')
     if address is None:
         raise HttpError(400, '缺少参数 address')
-    # 获取数据库连接
-    conn, cursor = get_connection()
 
-    # 判断用户名是否存在
-    cursor.execute('select count(*) from `users` where id=%s', (session.get('user_id'),))
-    count = cursor.fetchone()[0]
-    if count >= 1:
-        raise HttpError(400, 'username参数已存在')
+    # 数据库操作
+    cursor.execute('update `users` set `sex`=%s, `age`=%s, `address`=%s where `username`=%s', (sex, age, address,
+                                                                                               username))
 
-    # 根据登录时储存的user_id在where子句中定位到具体的用户并更新他的用户名
-    cursor.execute('update `users` set `username`=%s, `sex`=%s, `age`=%s, `address`=%s where id=%s', 
-                   (username, sex, age, address, session.get('user_id')))
     conn.commit()
-    
-    session['username'] = username
 
     # 关闭数据库连接
     cursor.close()
     conn.close()
 
-    return '修改信息成功'
+    return '修改个人信息成功'
 
 
 # 留言界面
